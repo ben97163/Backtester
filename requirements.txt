@@ -1,0 +1,4 @@
+btester
+requests
+yfinance
+quantstats==0.0.59
