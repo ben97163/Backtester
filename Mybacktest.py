@@ -184,7 +184,7 @@ class Strategy():
         
         for symbol in self.symbols:
             # Check for a buy signal for the previous index
-            if i >= len(self.buy_signal[symbol]):
+            if i > len(self.buy_signal[symbol]):
                 break
             
             if self.buy_signal[symbol][i - 1]:
