@@ -197,20 +197,27 @@ class Strategy():
             
         for position in self.open_positions[:]:
             
-            position.opened_days += 1
-            
             # Stop Profit
             if record[(position.symbol, 'Open')] >= position.stop_profit_price:
-                self.close(position=position, price=record[(position.symbol,'Close')], exit_reason="Stop Profit")
+                self.close(position=position, price=record[(position.symbol,'Open')], exit_reason="Stop Profit")
             
             # Stop Loss
             elif record[(position.symbol, 'Open')] <= position.stop_loss_price:
+                self.close(position=position, price=record[(position.symbol,'Open')], exit_reason="Stop Loss")
+            
+            # Stop Profit
+            elif record[(position.symbol, 'Close')] >= position.stop_profit_price:
+                self.close(position=position, price=record[(position.symbol,'Close')], exit_reason="Stop Profit")
+            
+            # Stop Loss
+            elif record[(position.symbol, 'Close')] <= position.stop_loss_price:
                 self.close(position=position, price=record[(position.symbol,'Close')], exit_reason="Stop Loss")
             
             # Exceed Maximum Holding Period
             elif position.opened_days >= self.max_holding_period:
                 self.close(position=position, price=record[(position.symbol,'Close')], exit_reason="Exceed Maximum Holding Period")
-        
+
+            position.opened_days += 1
             # if self.sell_signal[position.symbol][i - 1]:
             #     self.close(position=position, price=record[(position.symbol,'Open')], exit_reason="Not Yet")
 
@@ -301,7 +308,7 @@ class Strategy():
             self.assets_value -= position.current_value
             position.update(last_date=self.date, last_price=price)
 
-            trade_commission = (position.open_price + position.last_price) * position.position_size * self.commission + (position.last_price * position.position_size * 0.003)
+            trade_commission = (position.open_price + position.last_price) * position.position_size * self.commission + (position.last_price * position.position_size * 0.003) if self.commission != 0 else 0
             self.cumulative_return += position.profit_loss - trade_commission
 
             trade = Trade(position.symbol, position.open_date, position.last_date, position.open_price,
@@ -311,7 +318,7 @@ class Strategy():
             self.trades.extend([trade])
             self.open_positions.remove(position)
 
-            close_cost = position.last_price * position.position_size * (self.commission + 0.003)
+            close_cost = position.last_price * position.position_size * (self.commission + 0.003) if self.commission != 0 else 0
             self.cash += position.current_value - close_cost
 
         return True
