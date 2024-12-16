@@ -114,7 +114,7 @@ class Strategy():
     """
 
     
-    def init(self, buy_signal: pd.DataFrame, max_positions: int = 20, 
+    def init(self, buy_signal: pd.DataFrame, sell_signal: pd.DataFrame = None, max_positions: int = 20, 
              stop_profit: float = 1.20, stop_loss: float = 0.9, max_holding_period: int = 30):
         """
         Abstract method for initializing resources and parameters for the strategy.
@@ -152,7 +152,9 @@ class Strategy():
         
         for symbol in self.symbols:
             self.buy_signal[symbol] = buy_signal[symbol].values if symbol in buy_signal.columns else [0] * len(buy_signal)
-
+            if sell_signal is not None:
+                self.sell_signal[symbol] = sell_signal[symbol].values if symbol in sell_signal.columns else [0] * len(sell_signal)
+            
     def next(self, i: int, record: Dict[Hashable, Any]):
         """
         Abstract method defining the core functionality of the strategy for each time step.
@@ -197,8 +199,12 @@ class Strategy():
             
         for position in self.open_positions[:]:
             
+            # Exit Signal
+            if self.sell_signal[position.symbol][i - 1]:
+                self.close(position=position, price=record[(position.symbol,'Open')], exit_reason="Exit Signal")
+                
             # Stop Profit
-            if record[(position.symbol, 'Open')] >= position.stop_profit_price:
+            elif record[(position.symbol, 'Open')] >= position.stop_profit_price:
                 self.close(position=position, price=record[(position.symbol,'Open')], exit_reason="Stop Profit")
             
             # Stop Loss
@@ -217,9 +223,10 @@ class Strategy():
             elif position.opened_days >= self.max_holding_period:
                 self.close(position=position, price=record[(position.symbol,'Close')], exit_reason="Exceed Maximum Holding Period")
 
+            
+            
             position.opened_days += 1
-            # if self.sell_signal[position.symbol][i - 1]:
-            #     self.close(position=position, price=record[(position.symbol,'Open')], exit_reason="Not Yet")
+            
 
     def __init__(self):
         self.data = pd.DataFrame()
