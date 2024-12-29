@@ -202,6 +202,7 @@ class Strategy():
             # Exit Signal
             if self.sell_signal[position.symbol][i - 1]:
                 self.close(position=position, price=record[(position.symbol,'Open')], exit_reason="Exit Signal")
+                self.sell_signal[position.symbol][i - 1] = 0
                 
             # Stop Profit
             elif record[(position.symbol, 'Open')] >= position.stop_profit_price:
@@ -278,7 +279,14 @@ class Strategy():
             print(f"Not Enough Money to buy at {self.date} for stock {symbol}!")
             return False
 
-        position = Position(symbol=symbol, open_date=self.date, open_price=price, position_size=size, stop_profit_price=price*self.stop_profit, stop_loss_price=price*self.stop_loss)
+        position = Position(symbol=symbol, 
+                            open_date=self.date, 
+                            open_price=price, 
+                            position_size=size, 
+                            stop_profit_price=price*self.stop_profit, 
+                            stop_loss_price=price*self.stop_loss
+                            )
+        
         position.update(last_date=self.date, last_price=price)
 
         self.assets_value += position.current_value
