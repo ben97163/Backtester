@@ -183,19 +183,6 @@ class Strategy():
         
         if i == 0:
             return
-        
-        for symbol in self.symbols:
-            # Check for a buy signal for the previous index
-            if i > len(self.buy_signal[symbol]):
-                break
-            
-            if self.buy_signal[symbol][i - 1]:
-                if len(self.open_positions) >= self.max_positions:
-                    print(f"Exceeded maximum positions of {self.max_positions} at {self.index[i]} for symbol {symbol}!")
-                    # print("Currently Opened Positions:")
-                    # print(self.open_positions)
-                else:
-                    self.open(symbol=symbol, price=record[(symbol, 'Open')], size=self.positionSize(record[(symbol, 'Open')]))
             
         for position in self.open_positions[:]:
             
@@ -227,7 +214,22 @@ class Strategy():
             
             
             position.opened_days += 1
+        
+        
+        for symbol in self.symbols:
+            # Check for a buy signal for the previous index
+            if i > len(self.buy_signal[symbol]):
+                break
             
+            if self.buy_signal[symbol][i - 1]:
+                if len(self.open_positions) >= self.max_positions:
+                    print(f"Exceeded maximum positions of {self.max_positions} at {self.index[i]} for symbol {symbol}!")
+                    # print("Currently Opened Positions:")
+                    # print(self.open_positions)
+                else:
+                    self.open(symbol=symbol, price=record[(symbol, 'Open')], size=self.positionSize(record[(symbol, 'Open')])) 
+
+
 
     def __init__(self):
         self.data = pd.DataFrame()
@@ -270,7 +272,7 @@ class Strategy():
             size = self.cash / (price * (1 + self.commission))
             open_cost = self.cash
         else:
-            open_cost = size * price * (1 + self.commission)
+            open_cost = (size - 1) * price * (1 + self.commission) 
 
         if isnan(size) or size <= .0:
             return False
@@ -319,6 +321,7 @@ class Strategy():
             for position in self.open_positions[:]:
                 if position.symbol == symbol:
                     self.close(position=position, price=price)
+                    break
         else:
             self.assets_value -= position.current_value
             position.update(last_date=self.date, last_price=price)
